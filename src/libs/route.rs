@@ -83,8 +83,19 @@ pub async fn lnurl(db: web::Data<Client>, payload: web::Path<String>) -> impl Re
             .text()
             .await
             .unwrap();
-            let json_respon: Value = serde_json::from_str(&respon).unwrap();
-            HttpResponse::Ok().json(json_respon)
+            let json_respon = serde_json::from_str::<Value>(&respon);
+            match json_respon {
+                Ok(expr) => {
+                    return HttpResponse::Ok().json(expr);
+                }
+                Err(expr) => {
+                    println!("{:#?}", expr);
+                    return HttpResponse::NotFound().json(
+                        serde_json::from_str::<Value>("{{\"status\":400,\"message\":\"Error\"}")
+                            .unwrap(),
+                    );
+                }
+            }
         }
         None => HttpResponse::NotFound()
             .json(serde_json::from_str::<Value>("{\"status\":404}").unwrap()),
